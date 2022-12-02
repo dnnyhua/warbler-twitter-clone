@@ -50,14 +50,25 @@
           <p>{{ msg.text }}</p>
         </div>
         {% if msg.id in likes %}
-        <form method="POST" action="/users/add_like/{{ msg.id }}" id="messages-form">
+        <form method="POST" action="/users/remove_like/{{ msg.id }}" id="messages-form">
           <button class="
                 btn 
                 btn-sm 
-                {{'btn-primary' if msg.id in likes else 'btn-secondary'}}">
+                btn-primary">
             <i class="fa fa-thumbs-up"></i>
           </button>
         </form>
+        <!-- {{'btn-primary' if msg.id in likes else 'btn-secondary'}} -->
+        {% else %}
+        <form method="POST" action="/users/add_like/{{ msg.id }}" id="messages-form">
+          <button class="
+                        btn 
+                        btn-sm 
+                        btn-secondary">
+            <i class="fa fa-thumbs-up"></i>
+          </button>
+        </form>
+        {% endif %}
       </li>
       {% endfor %}
     </ul>

@@ -157,7 +157,6 @@ def users_show(user_id):
                 .all())
 
     likes = Likes.query.filter(Likes.user_id == user_id)
-
     return render_template('users/show.html', user=user, messages=messages, likes=likes)
 
 
@@ -211,7 +210,6 @@ def stop_following(follow_id):
     followed_user = User.query.get(follow_id)
     g.user.following.remove(followed_user) #remove user object from user.following, which is a list of user objects that you are following
     db.session.commit()
-
     return redirect(f"/users/{g.user.id}/following")
 
 
@@ -245,11 +243,6 @@ def profile():
     return render_template('users/edit.html', form=form, user=user)
 
 
-
-
-
-
-
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
     """Delete user."""
@@ -262,7 +255,6 @@ def delete_user():
 
     db.session.delete(g.user)
     db.session.commit()
-
     return redirect("/signup")
 
 
@@ -357,7 +349,7 @@ def homepage():
 
 
 #############################################
-# Likes
+# Likes, Unlike
 
 
 @app.route('/users/add_like/<int:msg_id>', methods=["POST"])
@@ -368,13 +360,11 @@ def like_warbler(msg_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-
     msg = Message.query.get(msg_id)
 
     if msg.user_id == g.user.id:
         flash("You cannot like your own Warbler", "danger")
         
-
     else:
         liked_msg = Likes(user_id=g.user.id, message_id=msg_id)
         db.session.add(liked_msg)
@@ -382,11 +372,19 @@ def like_warbler(msg_id):
     return redirect('/')
 
 
+@app.route('/users/remove_like/<int:msg_id>', methods=["POST"])
+def remove_likes(msg_id):
+    """ Unlike a message """
 
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
 
-
-
-
+    liked_msg = Message.query.get_or_404(msg_id)
+    g.user.likes.remove(liked_msg)
+    db.session.commit()
+    
+    return redirect(f"/users/{g.user.id}/likes")
 
 
 @app.route('/users/<int:user_id>/likes')
