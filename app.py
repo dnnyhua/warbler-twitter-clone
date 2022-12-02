@@ -155,7 +155,10 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    return render_template('users/show.html', user=user, messages=messages)
+
+    likes = Likes.query.filter(Likes.user_id == user_id)
+
+    return render_template('users/show.html', user=user, messages=messages, likes=likes)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -206,7 +209,7 @@ def stop_following(follow_id):
         return redirect("/")
 
     followed_user = User.query.get(follow_id)
-    g.user.following.remove(followed_user)
+    g.user.following.remove(followed_user) #remove user object from user.following, which is a list of user objects that you are following
     db.session.commit()
 
     return redirect(f"/users/{g.user.id}/following")
@@ -339,12 +342,73 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-                   
 
-        return render_template('home.html', messages=messages)
+
+        # maybe likes can be a list of message_ids
+
+        likes = [msg.id for msg in user.likes]
+
+
+        return render_template('home.html', messages=messages, likes=likes)
 
     else:
         return render_template('home-anon.html')
+
+
+
+#############################################
+# Likes
+
+
+@app.route('/users/add_like/<int:msg_id>', methods=["POST"])
+def like_warbler(msg_id):
+    """ Click button to like a post by other users """
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+
+    msg = Message.query.get(msg_id)
+
+    if msg.user_id == g.user.id:
+        flash("You cannot like your own Warbler", "danger")
+        
+
+    else:
+        liked_msg = Likes(user_id=g.user.id, message_id=msg_id)
+        db.session.add(liked_msg)
+        db.session.commit()
+    return redirect('/')
+
+
+
+
+
+
+
+
+
+@app.route('/users/<int:user_id>/likes')
+def show_likes(user_id):
+    """ Show posts liked by the users"""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    likes = user.likes # list of message objects
+    likes_id = [message.id for message in user.likes] # id of messages that user liked
+
+    return render_template('users/likes.html', user=user, likes_id=likes_id, likes=likes)
+
+
+    
+    
+
+
+
 
 
 ##############################################################################
